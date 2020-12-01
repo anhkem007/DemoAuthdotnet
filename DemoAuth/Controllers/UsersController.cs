@@ -152,14 +152,17 @@ namespace DemoAuth.Controllers
         }
         public void sendOTP(string phone, string key)
         {
-            var topt = new Totp(Encoding.ASCII.GetBytes(key), step: 120, totpSize: 5);
+            var topt = new Totp(Encoding.ASCII.GetBytes(key), step: 60, totpSize: 5);
             string otp = topt.ComputeTotp(DateTime.Now);
+            int i =1;
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("http://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json/");
             HttpResponseMessage res = client.PostAsJsonAsync("", new
             {
-                ApiKey = "881A61A59E543FBA4B70F709D4354A",
-                SecretKey = "739DFB9AA0FA885C6B9B5BFA934674",
+                ApiKey = "99211B5D3B0EE6F69939FFB99BFD11",
+                //"881A61A59E543FBA4B70F709D4354A",
+                SecretKey = "AA5496014FCB8CEC813D5896453D67",
+                //"739DFB9AA0FA885C6B9B5BFA934674",
                 Phone = phone,
                 SmsType = 2,
                 Brandname = "Baotrixemay",
@@ -168,6 +171,8 @@ namespace DemoAuth.Controllers
             Console.WriteLine(res);
 
         }
+
+        
 
         [HttpPost("verifyOtp")]
         public ActionResult<Object> VerifyOTP(User user)
@@ -182,6 +187,27 @@ namespace DemoAuth.Controllers
             _context.Entry(u).State = EntityState.Modified;
             _context.SaveChanges();
             return new { Auth = true, Phone = u.Sdt, Id = u.Id, NewPass = newPassword };
+        }
+
+        [Authorize]
+        [HttpPost("SendMoney")]
+        public async Task<Object> SendMoney(User user)
+        {
+            var idUser = User.Claims.FirstOrDefault(x => x.Type.Equals("ID", StringComparison.InvariantCultureIgnoreCase)).Value;
+            User u = await _context.Users.FindAsync(Int32.Parse(idUser));
+            if (u == null) return new { Auth = false, Message = "Vui lòng đăng nhập" };
+            var topt = new Totp(Encoding.ASCII.GetBytes(u.TokenOtp), step: 60, totpSize: 5);
+            string otp = topt.ComputeTotp(DateTime.Now);
+            if (!otp.Equals(user.Otp)) return new { Auth = false, Message = "Sai mã Otp"};
+            if(u.Amount < user.Amount) return new { Auth = false, Message = "Không đủ tiền gửi" };
+            User u2 = _context.Users.Where(u => u.Username == user.Username).FirstOrDefault();
+            if (u2 == null) return new { Auth = false, Message = "Tài khoản chuyển không tồn tại" };
+            u.Amount = u.Amount - user.Amount;
+            u2.Amount = u2.Amount + user.Amount;
+            _context.Entry(u).State = EntityState.Modified;
+            _context.Entry(u2).State = EntityState.Modified;
+            _context.SaveChanges();
+            return new { Auth = true, Message = "Chuyển tiền thành công" };
         }
 
         public string RandomString(int length)

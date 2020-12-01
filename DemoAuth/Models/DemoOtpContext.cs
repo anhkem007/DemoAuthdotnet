@@ -24,7 +24,7 @@ namespace DemoAuth.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Data Source=DESKTOP-VU24FJJ\\SQLEXPRESS;Initial Catalog=DemoOtp;Integrated Security=True");
+                optionsBuilder.UseSqlServer("Data Source=DESKTOP-VU24FJJ\\SQLEXPRESS;Initial Catalog=DemoOtp;Integrated Security=True;");
             }
         }
 
@@ -32,13 +32,13 @@ namespace DemoAuth.Models
         {
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasIndex(e => e.TokenOtp, "UQ__Users__20A27360FA1938F5")
+                entity.HasIndex(e => e.TokenOtp, "UQ__Users__20A27360B4F10841")
                     .IsUnique();
 
-                entity.HasIndex(e => e.Username, "UQ__Users__536C85E4F2EFA337")
+                entity.HasIndex(e => e.Username, "UQ__Users__536C85E465D37EFA")
                     .IsUnique();
 
-                entity.HasIndex(e => e.Sdt, "UQ__Users__CA1E34AD80A20032")
+                entity.HasIndex(e => e.Sdt, "UQ__Users__CA1E34AD6578AD88")
                     .IsUnique();
 
                 entity.Property(e => e.Password)
@@ -53,7 +53,7 @@ namespace DemoAuth.Models
 
                 entity.Property(e => e.TokenOtp)
                     .IsRequired()
-                    .HasMaxLength(1)
+                    .HasMaxLength(20)
                     .IsUnicode(false);
 
                 entity.Property(e => e.Username)

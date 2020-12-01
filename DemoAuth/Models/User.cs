@@ -14,6 +14,7 @@ namespace DemoAuth.Models
         public string Sdt { get; set; }
         public string TokenOtp { get; set; }
         public bool? Active { get; set; }
+        public int? Amount { get; set; }
 
         [NotMapped]
         public virtual string Otp { get; set; }
