@@ -152,23 +152,23 @@ namespace DemoAuth.Controllers
         }
         public void sendOTP(string phone, string key)
         {
-            var topt = new Totp(Encoding.ASCII.GetBytes(key), step: 60, totpSize: 5);
+            var topt = new Totp(Encoding.ASCII.GetBytes(key), step: 120, totpSize: 5);
             string otp = topt.ComputeTotp(DateTime.Now);
             int i =1;
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("http://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json/");
             HttpResponseMessage res = client.PostAsJsonAsync("", new
             {
-                ApiKey = "99211B5D3B0EE6F69939FFB99BFD11",
+                ApiKey = "881A61A59E543FBA4B70F709D4354A",
                 //"881A61A59E543FBA4B70F709D4354A",
-                SecretKey = "AA5496014FCB8CEC813D5896453D67",
+                SecretKey = "739DFB9AA0FA885C6B9B5BFA934674",
                 //"739DFB9AA0FA885C6B9B5BFA934674",
                 Phone = phone,
                 SmsType = 2,
                 Brandname = "Baotrixemay",
                 Content = otp
             }).Result;
-            Console.WriteLine(res);
+            //Console.WriteLine(res);
 
         }
 
@@ -179,7 +179,7 @@ namespace DemoAuth.Controllers
         {
             User u = _context.Users.Where(u => u.Id == user.Id).FirstOrDefault();
             if (u == null) return new { Auth = false };
-            var topt = new Totp(Encoding.ASCII.GetBytes(u.TokenOtp), step: 60, totpSize: 5);
+            var topt = new Totp(Encoding.ASCII.GetBytes(u.TokenOtp), step: 120, totpSize: 5);
             string otp = topt.ComputeTotp(DateTime.Now);
             if(!otp.Equals(user.Otp)) return new { Auth = false };
             string newPassword = RandomString(6);
@@ -196,7 +196,7 @@ namespace DemoAuth.Controllers
             var idUser = User.Claims.FirstOrDefault(x => x.Type.Equals("ID", StringComparison.InvariantCultureIgnoreCase)).Value;
             User u = await _context.Users.FindAsync(Int32.Parse(idUser));
             if (u == null) return new { Auth = false, Message = "Vui lòng đăng nhập" };
-            var topt = new Totp(Encoding.ASCII.GetBytes(u.TokenOtp), step: 60, totpSize: 5);
+            var topt = new Totp(Encoding.ASCII.GetBytes(u.TokenOtp), step: 120, totpSize: 5);
             string otp = topt.ComputeTotp(DateTime.Now);
             if (!otp.Equals(user.Otp)) return new { Auth = false, Message = "Sai mã Otp"};
             if(u.Amount < user.Amount) return new { Auth = false, Message = "Không đủ tiền gửi" };
@@ -264,7 +264,52 @@ namespace DemoAuth.Controllers
         {
             var idUser = User.Claims.FirstOrDefault(x => x.Type.Equals("ID", StringComparison.InvariantCultureIgnoreCase)).Value;
             User u = await _context.Users.FindAsync(Int32.Parse(idUser));
+            //if (u.Active == false) throw new Exception();
             return u;
+        }
+
+        [HttpPost("ActiveToken")]
+        public object ActiveToken(User user)
+        {
+            User u = _context.Users.Where(u => u.Username == user.Username).FirstOrDefault();
+            var topt = new Totp(Encoding.ASCII.GetBytes(u.TokenOtp), step: 60, totpSize: 5);
+            string otp = topt.ComputeTotp(DateTime.Now);
+            if (otp.Equals(user.Otp))
+            {
+                u.Active = true;
+                _context.Entry(u).State = EntityState.Modified;
+                _context.SaveChanges();
+                return new
+                {
+                    Status = true
+                };
+            }
+            return new
+            {
+                Status = false
+            };
+        }
+
+        [HttpPost("UnActiveToken")]
+        public object UnActiveToken(User user)
+        {
+            User u = _context.Users.Where(u => u.Username == user.Username).FirstOrDefault();
+            var topt = new Totp(Encoding.ASCII.GetBytes(u.TokenOtp), step: 60, totpSize: 5);
+            string otp = topt.ComputeTotp(DateTime.Now);
+            if (otp.Equals(user.Otp))
+            {
+                u.Active = false;
+                _context.Entry(u).State = EntityState.Modified;
+                _context.SaveChanges();
+                return new
+                {
+                    Status = true
+                };
+            }
+            return new
+            {
+                Status = false
+            };
         }
 
 
